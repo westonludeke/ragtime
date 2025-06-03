@@ -130,6 +130,10 @@ curl -X POST http://localhost:3000/query \
 ## ✅ Status
 
 ✅ Minimal backend working
+
+
 ✅ Document upload + chunking + embedding
+
 ✅ Chroma vector storage + retrieval
+
 🛠 Frontend not built yet
