@@ -1,16 +1,17 @@
 # Ragtime
 
-**Ragtime** is a minimalist internal RAG (Retrieval-Augmented Generation) chatbot designed to help engineers query technical documentation using natural language. It supports file upload, chunking, embedding via OpenAI, and vector search using Chroma.
+**Ragtime** is a modern RAG (Retrieval-Augmented Generation) chatbot designed to help engineers query technical documentation using natural language. Built with LangChain, OpenAI, Chroma, and Next.js.
 
 ---
 
 ## 🧠 Features
 
-* Upload and ingest `.md` or `.txt` documents
-* Automatically chunk documents into sections
-* Generate embeddings using OpenAI's `text-embedding-3-small`
-* Store and retrieve vectors using Chroma
-* Query documents via a simple REST API
+* **Smart Document Ingestion**: Upload `.md`, `.txt`, or `.mdx` files, or ingest directly from URLs
+* **LangChain Integration**: Built on LangChain's robust RAG pipeline
+* **Vector Search**: Powered by Chroma vector database with OpenAI embeddings
+* **Source Attribution**: See exactly which documents were used to answer your questions
+* **Modern UI**: Clean, responsive chat interface inspired by chat.langchain.com
+* **Real-time Chat**: Interactive conversation with your documentation
 
 ---
 
@@ -18,10 +19,12 @@
 
 | Layer     | Tech Used                                    |
 | --------- | -------------------------------------------- |
-| Backend   | Node.js, Express                             |
-| Embedding | OpenAI API                                   |
-| Vector DB | [Chroma](https://www.trychroma.com/) (local) |
-| Other     | dotenv, multer                               |
+| Backend   | Node.js, Express, LangChain                  |
+| Frontend  | Next.js 14, React, TypeScript, Tailwind CSS |
+| Embedding | OpenAI API (text-embedding-3-small)         |
+| LLM       | OpenAI GPT-4o-mini                           |
+| Vector DB | Chroma (in-memory)                           |
+| Other     | Lucide React, clsx, tailwind-merge          |
 
 ---
 
@@ -31,109 +34,191 @@
 
 ```bash
 git clone https://github.com/yourusername/ragtime.git
-cd ragtime/backend
+cd ragtime
 ```
 
----
-
-### 2. Set up your environment
-
-Make sure you’re using **Node.js** and **Python 3.10+**.
-
-#### a) Node packages
+### 2. Set up the backend
 
 ```bash
+cd backend
 npm install
 ```
 
-#### b) Python virtual environment (recommended)
+### 3. Set up the frontend
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install chromadb uvicorn
+cd ../frontend
+npm install
 ```
 
----
-
-### 3. Configure environment variables
+### 4. Configure environment variables
 
 Create a `.env` file in the `backend/` directory:
 
-```
+```env
 OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
----
+### 5. Start the development servers
 
-### 4. Start the Chroma server
-
-From inside the Python virtual environment:
-
+#### Backend (Terminal 1)
 ```bash
-uvicorn chromadb.app:app --host 0.0.0.0 --port 8000
+cd backend
+npm run dev
 ```
 
-Keep this running in its own terminal tab.
-
----
-
-### 5. Start the backend server
-
-In a separate terminal (still in `backend/`):
-
+#### Frontend (Terminal 2)
 ```bash
-node server.js
+cd frontend
+npm run dev
 ```
+
+The app will be available at:
+- Frontend: http://localhost:3001
+- Backend API: http://localhost:3000
 
 ---
 
 ## 📂 Directory Structure
 
 ```
-backend/
-├── routes/
-│   ├── upload.js      # For uploading/ingesting docs
-│   └── query.js       # For answering user questions
-├── services/
-│   ├── chunker.js     # Breaks docs into chunks
-│   ├── embedder.js    # Calls OpenAI to get embeddings
-│   └── retriever.js   # Vector search using Chroma
-├── .env               # API keys
-├── package.json
-├── server.js          # Entry point
-└── ...
+ragtime/
+├── backend/
+│   ├── routes/
+│   │   ├── upload.js      # File upload endpoints
+│   │   ├── query.js       # Query processing endpoints
+│   │   └── ingest.js      # Document ingestion endpoints
+│   ├── services/
+│   │   ├── ragService.js  # Main RAG pipeline (LangChain)
+│   │   └── docIngester.js # Document fetching & processing
+│   ├── .env               # API keys
+│   ├── package.json
+│   └── server.js          # Express server
+├── frontend/
+│   ├── app/
+│   │   ├── globals.css    # Global styles
+│   │   ├── layout.tsx     # Root layout
+│   │   └── page.tsx       # Main chat interface
+│   ├── lib/
+│   │   └── utils.ts       # Utility functions
+│   ├── package.json
+│   └── tailwind.config.js # Tailwind configuration
+└── README.md
 ```
 
 ---
 
-## 🧪 Testing
+## 🧪 Usage
 
-### Upload a file
+### 1. Load LangChain Documentation
 
+Click the "📚 Load LangChain Docs" button in the UI to automatically fetch and ingest LangChain's documentation from GitHub.
+
+### 2. Upload Your Own Documents
+
+Use the upload button to add your own `.md`, `.txt`, or `.mdx` files.
+
+### 3. Ask Questions
+
+Type natural language questions about your documentation and get AI-powered answers with source attribution.
+
+### API Endpoints
+
+#### Query Documents
 ```bash
-curl -X POST http://localhost:3000/upload \
+curl -X POST http://localhost:3000/api/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is LangChain?"}'
+```
+
+#### Upload File
+```bash
+curl -X POST http://localhost:3000/api/upload \
   -H "Content-Type: multipart/form-data" \
   -F "file=@your-doc.md"
 ```
 
-### Ask a question
-
+#### Ingest LangChain Docs
 ```bash
-curl -X POST http://localhost:3000/query \
-  -H "Content-Type: application/json" \
-  -d '{"query": "What is this document about?"}'
+curl -X POST http://localhost:3000/api/ingest/langchain-docs
+```
+
+#### Get Collection Stats
+```bash
+curl http://localhost:3000/api/query/stats
+```
+
+---
+
+## 🔧 Development
+
+### Backend Development
+
+The backend uses LangChain's RAG pipeline with:
+- **Text Splitting**: RecursiveCharacterTextSplitter with 1000-character chunks
+- **Embeddings**: OpenAI's text-embedding-3-small model
+- **Vector Store**: Chroma with cosine similarity search
+- **LLM**: GPT-4o-mini with custom prompt engineering
+
+### Frontend Development
+
+The frontend is built with:
+- **Next.js 14**: App Router for modern React development
+- **TypeScript**: Type-safe development
+- **Tailwind CSS**: Utility-first styling
+- **Lucide React**: Beautiful icons
+
+---
+
+## 🚀 Deployment
+
+### Vercel Deployment
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Set environment variables in Vercel dashboard
+4. Deploy!
+
+### Environment Variables for Production
+
+```env
+OPENAI_API_KEY=your_openai_api_key
+NODE_ENV=production
 ```
 
 ---
 
 ## ✅ Status
 
-✅ Minimal backend working
+✅ **v1 Complete**: LangChain-based RAG pipeline
 
+✅ **Modern UI**: Next.js frontend with chat interface
 
-✅ Document upload + chunking + embedding
+✅ **Document Ingestion**: File upload + GitHub integration
 
-✅ Chroma vector storage + retrieval
+✅ **Source Attribution**: See which documents were used
 
-🛠 Frontend not built yet
+✅ **Real-time Chat**: Interactive conversation interface
+
+🛠 **Future Enhancements**:
+- YouTube transcript ingestion
+- Confidence scoring
+- RAGAS evaluation integration
+- Multi-modal document support
+- Advanced filtering and search
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+---
+
+## 📄 License
+
+MIT License - see LICENSE file for details.
