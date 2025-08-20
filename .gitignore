@@ -39,6 +39,7 @@ Thumbs.db
 # AI Agent files
 AGENTS.md
 AGENT.md
+DEVELOPMENT_PLAN.md
 
 # Python virtual environment (legacy)
 venv/
