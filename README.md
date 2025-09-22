@@ -172,18 +172,21 @@ The frontend is built with:
 
 ## 🚀 Deployment
 
-### Vercel Deployment
+### Local Development
 
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Set environment variables in Vercel dashboard
-4. Deploy!
+This project is designed for local development. To deploy to production, you would need to:
+
+1. Set up a production server (e.g., AWS, DigitalOcean, Railway)
+2. Configure environment variables
+3. Set up a persistent vector database (Chroma server)
+4. Deploy both backend and frontend
 
 ### Environment Variables for Production
 
 ```env
 OPENAI_API_KEY=your_openai_api_key
 NODE_ENV=production
+PORT=3000
 ```
 
 ---
