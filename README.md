@@ -23,7 +23,7 @@
 | Frontend  | Next.js 14, React, TypeScript, Tailwind CSS |
 | Embedding | OpenAI API (text-embedding-3-small)         |
 | LLM       | OpenAI GPT-4o-mini                           |
-| Vector DB | Chroma (in-memory)                           |
+| Vector DB | Chroma (persistent via local server)         |
 | Other     | Lucide React, clsx, tailwind-merge          |
 
 ---
@@ -53,10 +53,22 @@ npm install
 
 ### 4. Configure environment variables
 
-Create a `.env` file in the `backend/` directory:
+Copy the example env file and update values:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+Edit `backend/.env` and set your OpenAI key and Chroma config:
 
 ```env
 OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# Chroma server URL (local by default)
+CHROMA_URL=http://localhost:8000
+# Deterministic collection name (reused across restarts)
+CHROMA_COLLECTION_NAME=ragtime
+# Embedding dims for your model (text-embedding-3-small => 1536)
+CHROMA_NUM_DIMENSIONS=1536
 ```
 
 ### 5. Start the development servers
@@ -76,6 +88,35 @@ npm run dev
 The app will be available at:
 - Frontend: http://localhost:3001
 - Backend API: http://localhost:3000
+
+---
+
+## 💾 Chroma persistence (local)
+
+This project now uses a persistent Chroma vector store so documents survive server restarts. Run a local Chroma server with a bind-mounted volume to keep data on disk, then point the backend at it via `CHROMA_URL`.
+
+### Option A: Docker (recommended)
+
+```bash
+mkdir -p .chroma
+docker run -d --name chroma \
+  -p 8000:8000 \
+  -v "$(pwd)/.chroma:/chroma/chroma" \
+  chromadb/chroma:latest
+
+# Default backend expects CHROMA_URL=http://localhost:8000
+```
+
+### Option B: Python CLI
+
+If you have Python, install chromadb and run the server locally with a persistent path:
+
+```bash
+pip install chromadb
+chroma run --path ./.chroma
+```
+
+Either option persists embeddings under the `./.chroma` directory. You can change the path to suit your environment.
 
 ---
 
@@ -147,6 +188,17 @@ curl -X POST http://localhost:3000/api/ingest/langchain-docs
 ```bash
 curl http://localhost:3000/api/query/stats
 ```
+
+---
+
+## ✅ Persistence test (acceptance)
+
+1. Start the Chroma server (Docker or CLI) so it persists to `./.chroma`.
+2. Start backend and frontend as above.
+3. Ingest a doc via `/api/upload` or the UI.
+4. Query it via `/api/query` and confirm relevant results.
+5. Restart only the backend (`Ctrl+C` then `npm run dev` in `backend/`).
+6. Query again: results should still come back (no re-upload needed).
 
 ---
 
