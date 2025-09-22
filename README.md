@@ -219,6 +219,3 @@ NODE_ENV=production
 
 ---
 
-## 📄 License
-
-MIT License - see LICENSE file for details.
